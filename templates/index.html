@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MediFind – Find Medicines Near You</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <span class="logo-icon">⚕</span>
+      <span class="logo-text">MediFind</span>
+    </div>
+    <nav class="nav-links">
+      <a href="#">Home</a>
+      <a href="#">Pharmacies</a>
+      <a href="#">Orders</a>
+    </nav>
+    <div class="header-right">
+     <button class="btn-outline-sm" onclick="window.location.href='/login'">
+    Sign In
+</button>
+    </div>
+  </div>
+</header>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-content">
+    <div class="hero-badge">📍 Bangalore, Karnataka</div>
+    <h1 class="hero-title">Find Medicines<br><span class="highlight">Near You, Instantly</span></h1>
+    <p class="hero-sub">Search any medicine and discover nearby pharmacies with real-time stock availability.</p>
+
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input
+        type="text"
+        id="searchInput"
+        class="search-input"
+        placeholder="Search medicine name (e.g. Paracetamol, Dolo 650...)"
+        autocomplete="off"
+      />
+      <button class="search-btn" onclick="doSearch()">Search</button>
+    </div>
+
+    <!-- Popular Tags -->
+    <div class="popular-section">
+      <span class="popular-label">Popular:</span>
+      <div class="popular-tags" id="popularTags">
+        <button class="tag" onclick="quickSearch('Paracetamol')">Paracetamol</button>
+        <button class="tag" onclick="quickSearch('Dolo 650')">Dolo 650</button>
+        <button class="tag" onclick="quickSearch('Crocin')">Crocin</button>
+        <button class="tag" onclick="quickSearch('Azithromycin')">Azithromycin</button>
+        <button class="tag" onclick="quickSearch('Augmentin 625')">Augmentin 625</button>
+        <button class="tag" onclick="quickSearch('Pantoprazole')">Pantoprazole</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat-card">
+      <div class="stat-num">8+</div>
+      <div class="stat-label">Pharmacies</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">12+</div>
+      <div class="stat-label">Medicines</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">Live</div>
+      <div class="stat-label">Stock Data</div>
+    </div>
+  </div>
+</section>
+
+<!-- Results Section -->
+<section class="results-section" id="resultsSection" style="display:none;">
+  <div class="results-inner">
+    <div class="results-header">
+      <div>
+        <h2 class="results-title" id="resultsTitle">Showing results</h2>
+        <p class="results-subtitle" id="resultsSubtitle">Live availability near you</p>
+      </div>
+      <div class="results-filter">
+        <select id="filterSelect" onchange="applyFilter()">
+          <option value="all">All Stock</option>
+          <option value="in_stock">In Stock</option>
+          <option value="low_stock">Low Stock</option>
+          <option value="out_of_stock">Out of Stock</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="cards-grid" id="cardsGrid"></div>
+
+    <div class="no-results" id="noResults" style="display:none;">
+      <div class="no-results-icon">💊</div>
+      <h3>No results found</h3>
+      <p>Try a different medicine name or check spelling.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section" id="featuresSection">
+  <div class="features-inner">
+    <h2 class="section-title">How MediFind Works</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🔍</div>
+        <h3>Search Medicine</h3>
+        <p>Type any medicine name and get instant results from nearby pharmacies.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📍</div>
+        <h3>Detect Location</h3>
+        <p>We find pharmacies closest to you based on your area automatically.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📦</div>
+        <h3>Check Live Stock</h3>
+        <p>Real-time inventory data so you always know what's available.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🚗</div>
+        <h3>Get Directions</h3>
+        <p>One tap to navigate directly to any pharmacy with the medicine you need.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="logo" style="margin-bottom: 8px;">
+      <span class="logo-icon">⚕</span>
+      <span class="logo-text" style="color:#fff;">MediFind</span>
+    </div>
+    <p style="color:rgba(255,255,255,0.5); font-size:0.85rem;">© 2026 MediFind. Helping Bangalore find medicines faster.</p>
+  </div>
+</footer>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
+  <div class="modal" id="modal" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
