@@ -32,9 +32,6 @@ pip install -r requirements.txt
 python app.py
 ```
 
-### 3. Open browser
-Visit: http://localhost:5000
-
 ## Features
 - 🔍 Search any medicine by name
 - 🟢 Color-coded stock status (In Stock / Low Stock / Out of Stock)
