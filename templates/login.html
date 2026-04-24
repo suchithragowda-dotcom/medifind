@@ -1,87 +1,219 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Login - MediFind</title>
-
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-
-    <style>
-        .login-container {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--bg);
-        }
-
-        .login-card {
-            background: var(--white);
-            padding: 30px;
-            border-radius: 16px;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: var(--shadow-lg);
-        }
-
-        .login-title {
-            text-align: center;
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 20px;
-        }
-
-        .input-field {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 15px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-        }
-
-        .google-btn {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            background: white;
-            cursor: pointer;
-            font-weight: 600;
-            margin-top: 10px;
-        }
-
-        .divider {
-            text-align: center;
-            margin: 15px 0;
-            color: var(--text-muted);
-        }
-    </style>
+  <meta charset="UTF-8"/>
+  <title>Sign In – MediFind</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    body { display:flex; align-items:center; justify-content:center; min-height:100vh; background:var(--bg); }
+    .login-card {
+      background:#fff;
+      border-radius:20px;
+      box-shadow:var(--shadow-lg);
+      padding:40px 36px;
+      width:100%;
+      max-width:400px;
+    }
+    .login-logo { display:flex; align-items:center; gap:10px; justify-content:center; margin-bottom:24px; }
+    .login-logo-icon { font-size:1.4rem; background:var(--primary); color:#fff; width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; }
+    .login-logo-text { font-family:'Plus Jakarta Sans',sans-serif; font-size:1.3rem; font-weight:800; color:var(--text); }
+    .login-title { font-family:'Plus Jakarta Sans',sans-serif; font-size:1.4rem; font-weight:800; text-align:center; margin-bottom:6px; }
+    .login-sub { text-align:center; color:var(--text-muted); font-size:0.875rem; margin-bottom:28px; }
+    .input-group { margin-bottom:14px; }
+    .input-group label { display:block; font-size:0.82rem; font-weight:600; margin-bottom:6px; color:var(--text); }
+    .input-field {
+      width:100%; padding:12px 14px;
+      border:1.5px solid var(--border);
+      border-radius:10px;
+      font-size:0.9rem;
+      font-family:inherit;
+      outline:none;
+      transition:border-color 0.2s;
+      box-sizing:border-box;
+    }
+    .input-field:focus { border-color:var(--primary); }
+    .login-btn {
+      width:100%; padding:13px;
+      background:var(--primary);
+      color:#fff;
+      border:none;
+      border-radius:10px;
+      font-size:0.95rem;
+      font-weight:700;
+      font-family:inherit;
+      cursor:pointer;
+      margin-top:6px;
+      transition:background 0.2s;
+    }
+    .login-btn:hover { background:var(--primary-dark); }
+    .divider { display:flex; align-items:center; gap:12px; margin:20px 0; color:var(--text-muted); font-size:0.82rem; }
+    .divider::before, .divider::after { content:''; flex:1; height:1px; background:var(--border); }
+    .google-btn {
+      width:100%; padding:12px;
+      border:1.5px solid var(--border);
+      border-radius:10px;
+      background:#fff;
+      cursor:pointer;
+      font-size:0.9rem;
+      font-weight:600;
+      font-family:inherit;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      transition:border-color 0.2s, box-shadow 0.2s;
+      color:var(--text);
+    }
+    .google-btn:hover { border-color:#4285F4; box-shadow:0 2px 8px rgba(66,133,244,0.15); }
+    .google-icon { width:20px; height:20px; }
+    .error-msg { background:#fff0f0; color:var(--danger); border-radius:8px; padding:10px 14px; font-size:0.85rem; margin-bottom:14px; border:1px solid #fecaca; display:none; }
+  </style>
 </head>
-
 <body>
 
-<div class="login-container">
+<div class="login-card">
+  <div class="login-logo">
+    <span class="login-logo-icon">⚕</span>
+    <span class="login-logo-text">MediFind</span>
+  </div>
+  <div class="login-title">Welcome back</div>
+  <div class="login-sub">Sign in to manage your orders</div>
 
-    <div class="login-card">
+  <div class="error-msg" id="errorMsg"></div>
 
-        <div class="login-title">Sign In</div>
-
-        <form method="POST">
-            <input type="text" name="username" placeholder="Username" class="input-field" required>
-            <input type="password" name="password" placeholder="Password" class="input-field" required>
-
-            <button class="btn-primary" style="width:100%;">Login</button>
-        </form>
-
-        <div class="divider">OR</div>
-
-        <!-- Google Sign In (Demo) -->
-        <button class="google-btn" onclick="window.location.href='/google-login'">
-            🔵 Sign in with Google
-        </button>
-
+  <form method="POST" onsubmit="return validateForm()">
+    <div class="input-group">
+      <label>Username</label>
+      <input type="text" name="username" class="input-field" placeholder="Enter username" required autocomplete="username">
     </div>
+    <div class="input-group">
+      <label>Password</label>
+      <input type="password" name="password" class="input-field" placeholder="Enter password" required autocomplete="current-password">
+    </div>
+    <button type="submit" class="login-btn">Sign In</button>
+  </form>
 
+  <div class="divider">OR</div>
+
+  <button class="google-btn" onclick="googleSignIn()">
+    <svg class="google-icon" viewBox="0 0 48 48">
+      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+      <path fill="none" d="M0 0h48v48H0z"/>
+    </svg>
+    Continue with Google
+  </button>
 </div>
 
+<!-- Fake Google OAuth Modal -->
+<div id="googleModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:999;backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:20px;padding:0;width:420px;max-width:94vw;box-shadow:0 24px 64px rgba(0,0,0,0.2);overflow:hidden;animation:modalIn 0.25s ease;">
+    <!-- Google-style header -->
+    <div style="padding:28px 32px 0;">
+      <svg viewBox="0 0 75 24" width="75" style="display:block;margin-bottom:16px;">
+        <path d="M28.42 11.83c0 3.27-2.56 5.68-5.7 5.68s-5.7-2.41-5.7-5.68 2.56-5.68 5.7-5.68 5.7 2.41 5.7 5.68zm-2.49 0c0-2.04-1.48-3.44-3.21-3.44s-3.21 1.4-3.21 3.44 1.48 3.44 3.21 3.44 3.21-1.4 3.21-3.44z" fill="#EA4335"/>
+        <path d="M41.42 11.83c0 3.27-2.56 5.68-5.7 5.68s-5.7-2.41-5.7-5.68 2.56-5.68 5.7-5.68 5.7 2.41 5.7 5.68zm-2.49 0c0-2.04-1.48-3.44-3.21-3.44s-3.21 1.4-3.21 3.44 1.48 3.44 3.21 3.44 3.21-1.4 3.21-3.44z" fill="#FBBC05"/>
+        <path d="M53.96 6.48v10.66c0 4.38-2.59 6.17-5.65 6.17-2.88 0-4.61-1.93-5.27-3.51l2.17-.9c.4 1 1.32 2.17 3.1 2.17 2.03 0 3.29-1.25 3.29-3.6v-.89h-.09c-.6.74-1.77 1.39-3.24 1.39-3.08 0-5.9-2.68-5.9-6.13 0-3.47 2.82-6.17 5.9-6.17 1.47 0 2.64.65 3.24 1.37h.09V6.48h2.36zm-2.19 5.37c0-2.04-1.36-3.53-3.09-3.53-1.75 0-3.21 1.49-3.21 3.53s1.46 3.44 3.21 3.44c1.73 0 3.09-1.4 3.09-3.44z" fill="#4285F4"/>
+        <path d="M58.69 1.2v16.12h-2.43V1.2h2.43z" fill="#34A853"/>
+        <path d="M68.26 14.1l1.93 1.29c-.63.93-2.13 2.52-4.73 2.52-3.23 0-5.64-2.49-5.64-5.68 0-3.38 2.43-5.68 5.36-5.68 2.95 0 4.39 2.34 4.86 3.6l.26.65-7.59 3.14c.58 1.14 1.48 1.72 2.75 1.72 1.27 0 2.15-.63 2.8-1.56zm-5.95-2.04l5.07-2.11c-.28-.71-1.12-1.2-2.11-1.2-1.27 0-3.04 1.12-2.96 3.31z" fill="#EA4335"/>
+        <path d="M9.5 10.73V8.3h8.1c.08.42.12.91.12 1.44 0 1.79-.49 4-2.07 5.58-1.54 1.6-3.5 2.45-6.14 2.45C4.39 17.77.5 14 .5 8.89S4.39 0 9.51 0c2.72 0 4.66 1.07 6.12 2.46l-1.72 1.72C12.84 3.13 11.58 2.44 9.5 2.44c-3.25 0-5.8 2.62-5.8 5.85s2.55 5.85 5.8 5.85c2.12 0 3.33-.85 4.1-1.62.63-.63 1.04-1.53 1.2-2.76l-5.3-.03z" fill="#4285F4"/>
+      </svg>
+      <div style="font-size:1.35rem;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;margin-bottom:6px;">Sign in</div>
+      <div style="font-size:0.9rem;color:#5f6368;margin-bottom:24px;">to continue to MediFind</div>
+    </div>
+
+    <div style="padding:0 32px 28px;" id="googleStep1">
+      <input id="gEmail" type="email" placeholder="Email or phone" 
+        style="width:100%;padding:13px 14px;border:1.5px solid #dadce0;border-radius:4px;font-size:0.95rem;font-family:inherit;outline:none;box-sizing:border-box;margin-bottom:6px;"
+        onfocus="this.style.borderColor='#4285F4'" onblur="this.style.borderColor='#dadce0'">
+      <div id="gEmailError" style="color:#d93025;font-size:0.8rem;margin-bottom:12px;display:none;">Enter a valid email address</div>
+      <div style="font-size:0.8rem;color:#5f6368;margin-bottom:24px;">Not your computer? Use Guest mode to sign in privately.</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <a href="#" style="color:#4285F4;font-size:0.9rem;font-weight:600;text-decoration:none;">Create account</a>
+        <button onclick="googleNext()" style="background:#4285F4;color:#fff;border:none;padding:10px 24px;border-radius:4px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit;">Next</button>
+      </div>
+    </div>
+
+    <div style="padding:0 32px 28px;display:none;" id="googleStep2">
+      <div style="border:1px solid #dadce0;border-radius:20px;padding:8px 14px;display:inline-flex;align-items:center;gap:8px;margin-bottom:24px;font-size:0.875rem;color:#3c4043;">
+        <span>👤</span><span id="gEmailDisplay"></span><span style="color:#5f6368;">▾</span>
+      </div>
+      <input id="gPassword" type="password" placeholder="Enter your password"
+        style="width:100%;padding:13px 14px;border:1.5px solid #dadce0;border-radius:4px;font-size:0.95rem;font-family:inherit;outline:none;box-sizing:border-box;margin-bottom:6px;"
+        onfocus="this.style.borderColor='#4285F4'" onblur="this.style.borderColor='#dadce0'"
+        onkeydown="if(event.key==='Enter') googleSignInComplete()">
+      <div id="gPassError" style="color:#d93025;font-size:0.8rem;margin-bottom:12px;display:none;">Wrong password. Try again.</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <a href="#" style="color:#4285F4;font-size:0.9rem;font-weight:600;text-decoration:none;">Forgot password?</a>
+        <button onclick="googleSignInComplete()" style="background:#4285F4;color:#fff;border:none;padding:10px 24px;border-radius:4px;font-size:0.9rem;font-weight:600;cursor:pointer;font-family:inherit;">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function validateForm() {
+  const err = document.getElementById('errorMsg');
+  err.style.display = 'none';
+  return true;
+}
+
+{% if request.method == 'POST' %}
+window.onload = () => {
+  const err = document.getElementById('errorMsg');
+  err.textContent = 'Invalid username or password. Please try again.';
+  err.style.display = 'block';
+};
+{% endif %}
+
+function googleSignIn() {
+  document.getElementById('googleModal').style.display = 'flex';
+  document.getElementById('googleStep1').style.display = 'block';
+  document.getElementById('googleStep2').style.display = 'none';
+  document.getElementById('gEmail').value = '';
+  document.getElementById('gPassword').value = '';
+  document.getElementById('gEmailError').style.display = 'none';
+  document.getElementById('gPassError').style.display = 'none';
+  setTimeout(() => document.getElementById('gEmail').focus(), 100);
+}
+
+function googleNext() {
+  const email = document.getElementById('gEmail').value.trim();
+  const errEl = document.getElementById('gEmailError');
+  if (!email || !email.includes('@')) {
+    errEl.style.display = 'block';
+    return;
+  }
+  errEl.style.display = 'none';
+  document.getElementById('gEmailDisplay').textContent = email;
+  document.getElementById('googleStep1').style.display = 'none';
+  document.getElementById('googleStep2').style.display = 'block';
+  setTimeout(() => document.getElementById('gPassword').focus(), 100);
+}
+
+function googleSignInComplete() {
+  const pass = document.getElementById('gPassword').value;
+  const errEl = document.getElementById('gPassError');
+  if (!pass || pass.length < 3) {
+    errEl.style.display = 'block';
+    return;
+  }
+  errEl.style.display = 'none';
+  // Fake loading then redirect
+  const btn = document.querySelector('#googleStep2 button:last-child');
+  btn.textContent = 'Signing in...';
+  btn.disabled = true;
+  setTimeout(() => { window.location.href = '/'; }, 1200);
+}
+
+// Close on backdrop click
+document.getElementById('googleModal').addEventListener('click', function(e) {
+  if (e.target === this) this.style.display = 'none';
+});
+</script>
 </body>
 </html>

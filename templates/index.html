@@ -18,15 +18,17 @@
       <span class="logo-text">MediFind</span>
     </div>
     <nav class="nav-links">
-      <a href="#">Home</a>
-      <a href="#">Pharmacies</a>
-      <a href="#">Orders</a>
+      <a href="/" class="nav-active">Home</a>
+      <a href="/pharmacies">Pharmacies</a>
+      <a href="/orders">Orders</a>
     </nav>
     <div class="header-right">
-     <button class="btn-outline-sm" onclick="window.location.href='/login'">
-    Sign In
-</button>
+      <button class="cart-btn" onclick="openCart()" id="cartBtn">
+        🛒 Cart <span class="cart-count" id="cartCount" style="display:none;">0</span>
+      </button>
+      <button class="btn-outline-sm" onclick="window.location.href='/login'">Sign In</button>
     </div>
+
   </div>
 </header>
 
@@ -147,11 +149,31 @@
   </div>
 </footer>
 
-<!-- Modal -->
+<!-- Pharmacy Detail Modal -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
   <div class="modal" id="modal" onclick="event.stopPropagation()">
     <button class="modal-close" onclick="closeModal()">✕</button>
     <div id="modalContent"></div>
+  </div>
+</div>
+
+<!-- Cart Drawer -->
+<div class="cart-overlay" id="cartOverlay" onclick="closeCart()"></div>
+<div class="cart-drawer" id="cartDrawer">
+  <div class="cart-header">
+    <h2 class="cart-title">🛒 Your Cart</h2>
+    <button class="cart-close" onclick="closeCart()">✕</button>
+  </div>
+  <div class="cart-pharmacy" id="cartPharmacy"></div>
+  <div class="cart-items" id="cartItems"></div>
+  <div class="cart-footer" id="cartFooter"></div>
+</div>
+
+<!-- Checkout Modal -->
+<div class="modal-overlay" id="checkoutOverlay" onclick="closeCheckout()">
+  <div class="modal" id="checkoutModal" onclick="event.stopPropagation()" style="max-width:460px;">
+    <button class="modal-close" onclick="closeCheckout()">✕</button>
+    <div id="checkoutContent"></div>
   </div>
 </div>
 

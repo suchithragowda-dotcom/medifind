@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pharmacies – MediFind</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <a href="/" class="logo" style="text-decoration:none;">
+      <span class="logo-icon">⚕</span>
+      <span class="logo-text">MediFind</span>
+    </a>
+    <nav class="nav-links">
+      <a href="/">Home</a>
+      <a href="/pharmacies" class="nav-active">Pharmacies</a>
+      <a href="/orders">Orders</a>
+    </nav>
+    <div class="header-right">
+      <button class="btn-outline-sm" onclick="window.location.href='/login'">Sign In</button>
+    </div>
+  </div>
+</header>
+
+<section class="page-hero" style="background: linear-gradient(135deg, #1a6bff 0%, #0e4cc4 100%); padding: 48px 24px; color:#fff;">
+  <div style="max-width:1100px;margin:auto;">
+    <h1 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:2rem;font-weight:800;margin-bottom:8px;">All Pharmacies</h1>
+    <p style="opacity:0.85;font-size:1rem;">Browse our network of 8 partner pharmacies across Bangalore</p>
+  </div>
+</section>
+
+<section style="max-width:1100px;margin:32px auto;padding:0 24px;">
+  <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;align-items:center;">
+    <input type="text" id="pharmSearch" placeholder="🔍  Search pharmacy name or area..." 
+      style="flex:1;min-width:200px;padding:10px 16px;border:1.5px solid var(--border);border-radius:10px;font-size:0.9rem;font-family:inherit;outline:none;"
+      oninput="filterPharmacies()">
+  </div>
+
+  <div id="pharmGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;">
+    <!-- Cards injected by JS -->
+    <div class="skeleton-card" style="height:220px;"></div>
+    <div class="skeleton-card" style="height:220px;"></div>
+    <div class="skeleton-card" style="height:220px;"></div>
+  </div>
+</section>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
+  <div class="modal" id="modal" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="logo" style="margin-bottom:8px;">
+      <span class="logo-icon">⚕</span>
+      <span class="logo-text" style="color:#fff;">MediFind</span>
+    </div>
+    <p style="color:rgba(255,255,255,0.5);font-size:0.85rem;">© 2026 MediFind. Helping Bangalore find medicines faster.</p>
+  </div>
+</footer>
+
+<script>
+let allPharmacies = [];
+
+async function loadPharmacies() {
+  const res = await fetch('/api/pharmacies');
+  allPharmacies = await res.json();
+  renderPharmacies(allPharmacies);
+}
+
+function filterPharmacies() {
+  const q = document.getElementById('pharmSearch').value.toLowerCase();
+  renderPharmacies(allPharmacies.filter(p =>
+    p.name.toLowerCase().includes(q) || p.location.toLowerCase().includes(q)
+  ));
+}
+
+function renderPharmacies(list) {
+  const grid = document.getElementById('pharmGrid');
+  if (list.length === 0) {
+    grid.innerHTML = '<p style="color:var(--text-muted);grid-column:1/-1;text-align:center;padding:40px;">No pharmacies found.</p>';
+    return;
+  }
+  grid.innerHTML = list.map(p => `
+    <div class="pharmacy-card" style="cursor:default;">
+      <div class="card-header">
+        <div class="pharmacy-icon">🏥</div>
+        <div class="pharmacy-info">
+          <div class="pharmacy-name">${esc(p.name)}</div>
+          <div class="pharmacy-location">📍 ${esc(p.location)}</div>
+        </div>
+        <div class="stock-badge in_stock" style="font-size:0.7rem;">● ${p.in_stock_count} in stock</div>
+      </div>
+      <div class="card-divider"></div>
+      <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:6px;">📍 ${esc(p.address)}</div>
+      <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:6px;">📞 ${esc(p.phone)}</div>
+      <div style="font-size:0.82rem;color:var(--success);font-weight:500;margin-bottom:14px;">🕐 ${esc(p.hours)}</div>
+      <div class="card-footer">
+        <button class="btn-primary" onclick="viewDetails(${p.id})">View Stock</button>
+        <button class="btn-secondary" onclick="getDir('${esc(p.name)}, ${esc(p.location)}, Bangalore')">🗺 Directions</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function viewDetails(pharmacyId) {
+  const overlay = document.getElementById('modalOverlay');
+  const content = document.getElementById('modalContent');
+  overlay.classList.add('open');
+  content.innerHTML = `<div style="text-align:center;padding:40px 0;"><div style="font-size:2rem;">⏳</div><p style="margin-top:8px;color:#64748b;">Loading details...</p></div>`;
+
+  const res = await fetch(`/api/pharmacy/${pharmacyId}`);
+  const data = await res.json();
+
+  const stockRows = data.stock.map(s => {
+    const st = s.quantity > 10 ? 'in_stock' : s.quantity > 0 ? 'low_stock' : 'out_of_stock';
+    const label = { in_stock: 'In Stock', low_stock: 'Low Stock', out_of_stock: 'Out of Stock' }[st];
+    return `<tr>
+      <td>${esc(s.medicine)}</td>
+      <td>${esc(s.category)}</td>
+      <td><span class="stock-badge ${st}" style="font-size:0.7rem;">${label}</span></td>
+      <td style="text-align:right;">₹${s.price.toFixed(2)}</td>
+      <td style="text-align:right;">${s.quantity}</td>
+    </tr>`;
+  }).join('');
+
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.name + ' ' + data.address)}`;
+
+  content.innerHTML = `
+    <div class="modal-pharmacy-name">${esc(data.name)}</div>
+    <div class="modal-address">📍 ${esc(data.address)}</div>
+    <div class="modal-hours" style="color:#00b07a;">🕐 ${esc(data.hours)}</div>
+    <div class="modal-hours" style="margin-top:-14px;margin-bottom:20px;">📞 ${esc(data.phone)}</div>
+    <h4 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:0.9rem;margin-bottom:10px;font-weight:700;">Stock Inventory</h4>
+    <table class="modal-stock-table">
+      <thead><tr><th>Medicine</th><th>Category</th><th>Status</th><th style="text-align:right;">Price</th><th style="text-align:right;">Qty</th></tr></thead>
+      <tbody>${stockRows}</tbody>
+    </table>
+    <div class="modal-btns">
+      <button class="modal-btn-primary" onclick="window.open('${mapsUrl}','_blank')">🗺 Get Directions</button>
+      <button class="modal-btn-secondary" onclick="window.open('tel:${esc(data.phone)}')">📞 Call Store</button>
+    </div>
+  `;
+}
+
+function getDir(place) {
+  window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place)}`, '_blank');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+function esc(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+loadPharmacies();
+</script>
+</body>
+</html>

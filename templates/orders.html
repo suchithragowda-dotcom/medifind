@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Orders – MediFind</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <a href="/" class="logo" style="text-decoration:none;">
+      <span class="logo-icon">⚕</span>
+      <span class="logo-text">MediFind</span>
+    </a>
+    <nav class="nav-links">
+      <a href="/">Home</a>
+      <a href="/pharmacies">Pharmacies</a>
+      <a href="/orders" class="nav-active">Orders</a>
+    </nav>
+    <div class="header-right">
+      <button class="btn-outline-sm" onclick="window.location.href='/login'">Sign In</button>
+    </div>
+  </div>
+</header>
+
+<section style="background:linear-gradient(135deg,#1a6bff,#0e4cc4);padding:48px 24px;color:#fff;">
+  <div style="max-width:900px;margin:auto;">
+    <h1 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:2rem;font-weight:800;margin-bottom:8px;">My Orders</h1>
+    <p style="opacity:0.85;">Track and manage your medicine orders</p>
+  </div>
+</section>
+
+<section style="max-width:900px;margin:32px auto;padding:0 24px;">
+  <div id="ordersContainer">
+    <div class="skeleton-card" style="height:120px;margin-bottom:16px;"></div>
+    <div class="skeleton-card" style="height:120px;margin-bottom:16px;"></div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="logo" style="margin-bottom:8px;">
+      <span class="logo-icon">⚕</span>
+      <span class="logo-text" style="color:#fff;">MediFind</span>
+    </div>
+    <p style="color:rgba(255,255,255,0.5);font-size:0.85rem;">© 2026 MediFind. Helping Bangalore find medicines faster.</p>
+  </div>
+</footer>
+
+<!-- Cancel confirmation overlay -->
+<div class="modal-overlay" id="cancelOverlay" onclick="closeCancelModal()">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:380px;text-align:center;">
+    <div style="font-size:2.5rem;margin-bottom:12px;">⚠️</div>
+    <h3 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.2rem;font-weight:700;margin-bottom:8px;">Cancel Order?</h3>
+    <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:24px;">This will cancel your order and restore stock.</p>
+    <div style="display:flex;gap:10px;">
+      <button class="modal-btn-secondary" onclick="closeCancelModal()" style="flex:1;">Keep Order</button>
+      <button class="modal-btn-primary" id="confirmCancelBtn" style="flex:1;background:var(--danger);">Yes, Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+async function loadOrders() {
+  const res = await fetch('/api/orders');
+  const orders = await res.json();
+  renderOrders(orders);
+}
+
+function renderOrders(orders) {
+  const container = document.getElementById('ordersContainer');
+  if (orders.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center;padding:80px 24px;">
+        <div style="font-size:3rem;margin-bottom:16px;">📋</div>
+        <h3 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.2rem;margin-bottom:8px;">No orders yet</h3>
+        <p style="color:var(--text-muted);margin-bottom:24px;">Search for medicines and place your first order.</p>
+        <button class="btn-primary" onclick="window.location.href='/'">Find Medicines</button>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = orders.map(o => {
+    const statusColor = { confirmed: '#00b07a', cancelled: '#ef4444', delivered: '#1a6bff' }[o.status] || '#64748b';
+    const statusIcon = { confirmed: '✅', cancelled: '❌', delivered: '📦' }[o.status] || '⏳';
+    const items = o.items.map(i =>
+      `<span style="font-size:0.82rem;background:#f1f5f9;padding:3px 10px;border-radius:20px;color:var(--text-muted);">
+        💊 ${esc(i.medicine_name)} × ${i.quantity}
+      </span>`
+    ).join('');
+
+    return `
+      <div class="pharmacy-card" style="margin-bottom:16px;cursor:default;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
+          <div>
+            <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:1rem;margin-bottom:4px;">
+              Order #${o.id} — ${esc(o.pharmacy_name)}
+            </div>
+            <div style="font-size:0.82rem;color:var(--text-muted);">📍 ${esc(o.pharmacy_location)} · ${o.created_at}</div>
+            <div style="font-size:0.82rem;color:var(--text-muted);">👤 ${esc(o.customer_name)} · 📞 ${esc(o.customer_phone || '–')}</div>
+            ${o.customer_address ? `<div style="font-size:0.82rem;color:var(--text-muted);">📬 ${esc(o.customer_address)}</div>` : ''}
+          </div>
+          <div style="text-align:right;">
+            <div style="color:${statusColor};font-weight:700;font-size:0.9rem;">${statusIcon} ${o.status.charAt(0).toUpperCase()+o.status.slice(1)}</div>
+            <div style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:1.1rem;margin-top:4px;">₹${o.total.toFixed(2)}</div>
+          </div>
+        </div>
+        <div class="card-divider" style="margin:14px 0;"></div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">${items}</div>
+        ${o.status === 'confirmed' ? `
+        <div style="display:flex;justify-content:flex-end;">
+          <button class="btn-secondary" style="color:var(--danger);border-color:var(--danger);" onclick="showCancel(${o.id})">Cancel Order</button>
+        </div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+let pendingCancelId = null;
+function showCancel(orderId) {
+  pendingCancelId = orderId;
+  document.getElementById('cancelOverlay').classList.add('open');
+  document.getElementById('confirmCancelBtn').onclick = () => doCancel(orderId);
+}
+function closeCancelModal() {
+  document.getElementById('cancelOverlay').classList.remove('open');
+  pendingCancelId = null;
+}
+async function doCancel(orderId) {
+  closeCancelModal();
+  const res = await fetch(`/api/orders/${orderId}/cancel`, { method: 'POST' });
+  const data = await res.json();
+  if (data.success) { loadOrders(); }
+  else { alert(data.error || 'Failed to cancel order.'); }
+}
+
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+loadOrders();
+</script>
+</body>
+</html>
